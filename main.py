@@ -5,7 +5,7 @@ from syftbox.lib import Client, SyftPermission
 import diffprivlib.tools as dp
 import time
 import psutil
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 def get_cpu_usage_mean():
@@ -89,7 +89,7 @@ def save(path: str, cpu_usage: float):
     Raises:
         - IOError: If the file cannot be opened or written to.
     """
-    current_time = datetime.now()
+    current_time = datetime.now(UTC)
     timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
     with open(path, "w") as json_file:
