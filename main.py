@@ -5,18 +5,18 @@ from syftbox.lib import Client, SyftPermission
 import diffprivlib.tools as dp
 import time
 import psutil
+from statistics import mean
 from datetime import datetime, UTC
 
 
-def get_cpu_usage_mean():
+def get_cpu_usage_samples():
     """
-    Calculate the mean CPU usage over a set of samples, using differential privacy for the final mean.
+    Collect 50 CPU usage samples over time intervals of 0.1 seconds.
 
-    The function collects CPU usage data using the `psutil` library over 50 samples taken at 0.1-second intervals. The mean of these
-    samples is then calculated with differential privacy applied using `diffprivlib`. The output mean value is rounded to 2 decimal places.
+    The function collects CPU usage data using the `psutil` library. The collected samples are returned as a list of CPU usage percentages.
 
     Returns:
-        float: The differentially private mean CPU usage.
+        list: A list containing 50 CPU usage values.
     """
     cpu_usage_values = []
 
@@ -26,18 +26,10 @@ def get_cpu_usage_mean():
         cpu_usage_values.append(cpu_usage)
         time.sleep(0.1)
 
-    # Calculate the differentially private mean of the collected CPU usage values
-    return round(
-        dp.mean(
-            cpu_usage_values,
-            epsilon=0.5,  # Privacy parameter controlling the level of differential privacy
-            bounds=(0, 100),  # Assumed bounds for CPU usage percentage (0-100%)
-        ),
-        2,  # Round to 2 decimal places
-    )
+    return cpu_usage_values
 
 
-def create_output_folder(path: Path) -> Path:
+def create_restricted_public_folder(path: Path) -> Path:
     """
     Create an output folder for CPU tracker data within the specified path.
 
@@ -60,41 +52,57 @@ def create_output_folder(path: Path) -> Path:
     return cpu_tracker_path
 
 
-def save(path: str, cpu_usage: float):
+def create_private_folder(path: Path) -> Path:
     """
-    Saves CPU usage statistics to a JSON file.
+    Create a private folder for CPU tracker data within the specified path.
 
-    This function captures the average CPU usage along with a timestamp and saves this information
-    into a specified JSON file.
+    This function creates a directory structure for storing CPU tracker data under `private/cpu_tracker`.
+    If the directory already exists, it will not be recreated. Additionally, default permissions for
+    accessing the created folder are set using the `SyftPermission` mechanism, allowing the data to be
+    accessible only by the owner's email.
 
     Args:
-        path (str): The path where the JSON file will be saved.
+        path (Path): The base path where the output folder should be created.
 
-    The JSON file will contain the following fields:
-        - "cpu": The mean CPU usage percentage retrieved from `get_cpu_usage_mean()`.
-        - "timestamp": A timestamp string (`timestamp_str`) indicating when the data was recorded.
+    Returns:
+        Path: The path to the created `cpu_tracker` directory.
+    """
+    cpu_tracker_path: Path = path / "private" / "cpu_tracker"
+    os.makedirs(cpu_tracker_path, exist_ok=True)
+
+    # Set default permissions for the created folder
+    permissions = SyftPermission.datasite_default(email=client.email)
+    permissions.save(cpu_tracker_path)
+
+    return cpu_tracker_path
+
+
+def save(path: str, cpu_usage: float):
+    """
+    Save the CPU usage and current timestamp to a JSON file.
+
+    This function records the current CPU usage percentage and the timestamp of when the data was recorded.
+    It then writes this information into a JSON file at the specified file path.
+
+    Parameters:
+        path (str): The file path where the JSON data should be saved.
+        cpu_usage (float): The current CPU usage percentage.
+
+    The JSON output will have the following format:
+    {
+        "cpu": <cpu_usage>,
+        "timestamp": "YYYY-MM-DD HH:MM:SS"
+    }
 
     Example:
-        >>> save("cpu_usage_data.json")
-        # The specified file, "cpu_usage_data.json", will contain:
-        # {
-        #     "cpu": 45.6,
-        #     "timestamp": "2024-11-12T10:30:00"
-        # }
-
-    Notes:
-        - The function uses the `json` module to write the data in a human-readable format.
-        - Make sure `get_cpu_usage_mean()` and `timestamp_str` are properly defined in the module.
-
-    Raises:
-        - IOError: If the file cannot be opened or written to.
+        save("datasites/user/app_pipelines/cpu_tracker/cpu_data.json", 75.4)
     """
     current_time = datetime.now(UTC)
     timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
 
     with open(path, "w") as json_file:
         json.dump(
-            {"cpu": get_cpu_usage_mean(), "timestamp": timestamp_str},
+            {"cpu": cpu_usage, "timestamp": timestamp_str},
             json_file,
             indent=4,
         )
@@ -102,13 +110,31 @@ def save(path: str, cpu_usage: float):
 
 if __name__ == "__main__":
     client = Client.load()
-    
-    # Create an output file with proper read permissions
-    output_folder = create_output_folder(client.datasite_path)
-    
-    # Get cpu usage mean with differential privacy in it.
-    cpu_usage = get_cpu_usage_mean()
 
-    # Saving current cpu usage
-    output_file: Path = output_folder / "cpu_tracker.json"
-    save(path=str(output_file), cpu_usage=cpu_usage)
+    # Create an output file with proper read permissions
+    restricted_public_folder = create_restricted_public_folder(client.datasite_path)
+
+    # Create private private folder
+    private_folder = create_private_folder(client.datasite_path)
+
+    # Get cpu usage mean with differential privacy in it.
+    cpu_usage_samples = get_cpu_usage_samples()
+
+    mean = mean(cpu_usage_samples)
+
+    mean_with_noise = round(  # type: ignore
+        dp.mean(  # type: ignore
+            cpu_usage_samples,
+            epsilon=0.5,  # Privacy parameter controlling the level of differential privacy
+            bounds=(0, 100),  # Assumed bounds for CPU usage percentage (0-100%)
+        ),
+        2,  # Round to 2 decimal places
+    )
+
+    # Saving Mean with Noise added in it.
+    public_mean_file: Path = restricted_public_folder / "cpu_tracker.json"
+    save(path=str(public_mean_file), cpu_usage=mean_with_noise)
+
+    # Saving the actual private mean.
+    private_mean_file: Path = private_folder / "cpu_tracker.json"
+    save(path=str(private_mean_file), cpu_usage=mean)
