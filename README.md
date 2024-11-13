@@ -1,5 +1,5 @@
 ---
-name: cpu_tracker
+name: cpu_tracker_member
 author: "OpenMined"
 version: 1.0.0
 source: https://github.com/openmined/cpu_tracker_member
