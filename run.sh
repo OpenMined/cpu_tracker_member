@@ -14,7 +14,7 @@ uv pip install -U syftbox
 . .venv/bin/activate
 
 # # run app using python from venv
-echo "Running ftop with $(python3 --version) at '$(which python3)'"
+echo "Running cpu_tracker_member with $(python3 --version) at '$(which python3)'"
 python3 main.py
 
 # # deactivate the virtual environment
