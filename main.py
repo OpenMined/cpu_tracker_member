@@ -29,11 +29,11 @@ def get_cpu_usage_samples():
     return cpu_usage_values
 
 
-def create_restricted_public_folder(path: Path) -> Path:
+def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
     """
     Create an output folder for CPU tracker data within the specified path.
 
-    This function creates a directory structure for storing CPU tracker data under `app_pipelines/cpu_tracker`. If the directory
+    This function creates a directory structure for storing CPU tracker data under `api_data/cpu_tracker`. If the directory
     already exists, it will not be recreated. Additionally, default permissions for accessing the created folder are set using the
     `SyftPermission` mechanism to allow the data to be read by an aggregator.
 
@@ -41,15 +41,12 @@ def create_restricted_public_folder(path: Path) -> Path:
         path (Path): The base path where the output folder should be created.
 
     """
-    cpu_tracker_path: Path = path / "app_pipelines" / "cpu_tracker"
     os.makedirs(cpu_tracker_path, exist_ok=True)
 
     # Set default permissions for the created folder
     permissions = SyftPermission.datasite_default(email=client.email)
     permissions.read.append("aggregator@openmined.org")
     permissions.save(cpu_tracker_path)
-
-    return cpu_tracker_path
 
 
 def create_private_folder(path: Path) -> Path:
@@ -95,7 +92,7 @@ def save(path: str, cpu_usage: float):
     }
 
     Example:
-        save("datasites/user/app_pipelines/cpu_tracker/cpu_data.json", 75.4)
+        save("datasites/user/api_data/cpu_tracker/cpu_data.json", 75.4)
     """
     current_time = datetime.now(UTC)
     timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -112,7 +109,8 @@ if __name__ == "__main__":
     client = Client.load()
 
     # Create an output file with proper read permissions
-    restricted_public_folder = create_restricted_public_folder(client.datasite_path)
+    restricted_public_folder = client.api_data("cpu_tracker")
+    create_restricted_public_folder(restricted_public_folder)
 
     # Create private private folder
     private_folder = create_private_folder(client.datasite_path)
