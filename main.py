@@ -8,6 +8,7 @@ import psutil
 from statistics import mean
 from datetime import datetime, UTC
 
+API_NAME = "cpu_tracker_member"
 
 def get_cpu_usage_samples():
     """
@@ -105,7 +106,31 @@ def save(path: str, cpu_usage: float):
         )
 
 
+def should_run() -> bool:
+    INTERVAL = 20  # 20 seconds
+    timestamp_file = f"./script_timestamps/{API_NAME}_last_run"
+    os.makedirs(os.path.dirname(timestamp_file), exist_ok=True)
+    now = datetime.now().timestamp()
+    time_diff = INTERVAL  # default to running if no file exists
+    if os.path.exists(timestamp_file):
+        try:
+            with open(timestamp_file, "r") as f:
+                last_run = int(f.read().strip())
+                time_diff = now - last_run
+        except (FileNotFoundError, ValueError):
+            print(f"Unable to read timestamp file: {timestamp_file}")
+    if time_diff >= INTERVAL:
+        with open(timestamp_file, "w") as f:
+            f.write(f"{int(now)}")
+        return True
+    return False
+   
+
 if __name__ == "__main__":
+    if not should_run():
+        print(f"Skipping {API_NAME}, not enough time has passed.")
+        exit(0)
+
     client = Client.load()
 
     # Create an output file with proper read permissions
