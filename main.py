@@ -9,6 +9,7 @@ from statistics import mean
 from datetime import datetime, UTC
 
 API_NAME = "cpu_tracker_member"
+AGGREGATOR_DATASITE = "aggregator@openmined.org"
 
 def get_cpu_usage_samples():
     """
@@ -46,7 +47,7 @@ def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
 
     # Set default permissions for the created folder
     permissions = SyftPermission.datasite_default(email=client.email)
-    permissions.read.append("aggregator@openmined.org")
+    permissions.read.append(AGGREGATOR_DATASITE)
     permissions.save(cpu_tracker_path)
 
 
