@@ -144,7 +144,7 @@ if __name__ == "__main__":
     # Get cpu usage mean with differential privacy in it.
     cpu_usage_samples = get_cpu_usage_samples()
 
-    mean = mean(cpu_usage_samples)
+    raw_cpu_mean = mean(cpu_usage_samples)
 
     mean_with_noise = round(  # type: ignore
         dp.mean(  # type: ignore
@@ -161,4 +161,4 @@ if __name__ == "__main__":
 
     # Saving the actual private mean.
     private_mean_file: Path = private_folder / "cpu_tracker.json"
-    save(path=str(private_mean_file), cpu_usage=mean)
+    save(path=str(private_mean_file), cpu_usage=raw_cpu_mean)
