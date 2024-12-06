@@ -67,7 +67,7 @@ def create_private_folder(path: Path) -> Path:
     Returns:
         Path: The path to the created `cpu_tracker` directory.
     """
-    cpu_tracker_path: Path = client.workspace.data_dir / "private" / app_name
+    cpu_tracker_path: Path = client.workspace.data_dir / "private" / "cpu_tracker" 
     os.makedirs(cpu_tracker_path, exist_ok=True)
 
     # Set default permissions for the created folder
