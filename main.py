@@ -11,6 +11,7 @@ from datetime import datetime, UTC
 API_NAME = "cpu_tracker_member"
 AGGREGATOR_DATASITE = "aggregator@openmined.org"
 
+
 def get_cpu_usage_samples():
     """
     Collect 50 CPU usage samples over time intervals of 0.1 seconds.
@@ -51,7 +52,7 @@ def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
     permissions.save(cpu_tracker_path)
 
 
-def create_private_folder(path: Path) -> Path:
+def create_private_folder(client: Client, path: Path) -> Path:
     """
     Create a private folder for CPU tracker data within the specified path.
 
@@ -66,7 +67,7 @@ def create_private_folder(path: Path) -> Path:
     Returns:
         Path: The path to the created `cpu_tracker` directory.
     """
-    cpu_tracker_path: Path = path / "private" / "cpu_tracker"
+    cpu_tracker_path: Path = client.workspace.data_dir / "private" / app_name
     os.makedirs(cpu_tracker_path, exist_ok=True)
 
     # Set default permissions for the created folder
@@ -125,7 +126,7 @@ def should_run() -> bool:
             f.write(f"{int(now)}")
         return True
     return False
-   
+
 
 if __name__ == "__main__":
     if not should_run():
