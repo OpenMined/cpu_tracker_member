@@ -52,7 +52,7 @@ def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
     permissions.save(cpu_tracker_path)
 
 
-def create_private_folder(client: Client, path: Path) -> Path:
+def create_private_folder(path: Path) -> Path:
     """
     Create a private folder for CPU tracker data within the specified path.
 
@@ -140,7 +140,7 @@ if __name__ == "__main__":
     create_restricted_public_folder(restricted_public_folder)
 
     # Create private private folder
-    private_folder = create_private_folder(client.datasite_path)
+    private_folder = create_private_folder(client.workspace.data_dir)
 
     # Get cpu usage mean with differential privacy in it.
     cpu_usage_samples = get_cpu_usage_samples()
