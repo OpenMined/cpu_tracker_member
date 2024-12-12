@@ -8,8 +8,7 @@ from statistics import mean
 import diffprivlib.tools as dp
 import psutil
 from syftbox.lib import Client
-from syftbox.lib.constants import PERM_FILE
-from syftbox.lib.permissions import PermissionRule, PermissionType, SyftPermission
+from syftbox.lib.permissions import SyftPermission
 
 API_NAME = "cpu_tracker_member"
 AGGREGATOR_DATASITE = "aggregator@openmined.org"
@@ -35,7 +34,7 @@ def get_cpu_usage_samples():
     return cpu_usage_values
 
 
-def create_restricted_public_folder(client: Client, cpu_tracker_path: Path) -> None:
+def create_restricted_public_folder(client: Client, cpu_tracker_dir: Path) -> None:
     """
     Create an output folder for CPU tracker data within the specified path.
 
@@ -47,18 +46,19 @@ def create_restricted_public_folder(client: Client, cpu_tracker_path: Path) -> N
         path (Path): The base path where the output folder should be created.
 
     """
-    os.makedirs(cpu_tracker_path, exist_ok=True)
+    os.makedirs(cpu_tracker_dir, exist_ok=True)
 
     # Set default permissions for the created folder
-    permfile_path = cpu_tracker_path / PERM_FILE
-    relative_path = permfile_path.relative_to(client.workspace.datasites)
-    permissions = SyftPermission(relative_filepath=relative_path, rules=[])
+    permissions = SyftPermission.datasite_default(
+        context=client,
+        dir=cpu_tracker_dir,
+    )
     permissions.add_rule(
         path="**",
         user=AGGREGATOR_DATASITE,
         permission="read",
     )
-    permissions.save(permfile_path)
+    permissions.save(cpu_tracker_dir)
 
 
 def create_private_folder(path: Path) -> Path:
