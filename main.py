@@ -1,12 +1,14 @@
-import os
-from pathlib import Path
 import json
-from syftbox.lib import Client, SyftPermission
-import diffprivlib.tools as dp
+import os
 import time
-import psutil
+from datetime import UTC, datetime
+from pathlib import Path
 from statistics import mean
-from datetime import datetime, UTC
+
+import diffprivlib.tools as dp
+import psutil
+from syftbox.lib import Client
+from syftbox.lib.permissions import SyftPermission
 
 API_NAME = "cpu_tracker_member"
 AGGREGATOR_DATASITE = "aggregator@openmined.org"
@@ -32,7 +34,7 @@ def get_cpu_usage_samples():
     return cpu_usage_values
 
 
-def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
+def create_restricted_public_folder(client: Client, cpu_tracker_dir: Path) -> None:
     """
     Create an output folder for CPU tracker data within the specified path.
 
@@ -44,12 +46,19 @@ def create_restricted_public_folder(cpu_tracker_path: Path) -> None:
         path (Path): The base path where the output folder should be created.
 
     """
-    os.makedirs(cpu_tracker_path, exist_ok=True)
+    os.makedirs(cpu_tracker_dir, exist_ok=True)
 
     # Set default permissions for the created folder
-    permissions = SyftPermission.datasite_default(email=client.email)
-    permissions.read.append(AGGREGATOR_DATASITE)
-    permissions.save(cpu_tracker_path)
+    permissions = SyftPermission.datasite_default(
+        context=client,
+        dir=cpu_tracker_dir,
+    )
+    permissions.add_rule(
+        path="**",
+        user=AGGREGATOR_DATASITE,
+        permission="read",
+    )
+    permissions.save(cpu_tracker_dir)
 
 
 def create_private_folder(path: Path) -> Path:
@@ -67,12 +76,8 @@ def create_private_folder(path: Path) -> Path:
     Returns:
         Path: The path to the created `cpu_tracker` directory.
     """
-    cpu_tracker_path: Path = client.workspace.data_dir / "private" / "cpu_tracker" 
+    cpu_tracker_path: Path = client.workspace.data_dir / "private" / "cpu_tracker"
     os.makedirs(cpu_tracker_path, exist_ok=True)
-
-    # Set default permissions for the created folder
-    permissions = SyftPermission.datasite_default(email=client.email)
-    permissions.save(cpu_tracker_path)
 
     return cpu_tracker_path
 
@@ -137,7 +142,7 @@ if __name__ == "__main__":
 
     # Create an output file with proper read permissions
     restricted_public_folder = client.api_data("cpu_tracker")
-    create_restricted_public_folder(restricted_public_folder)
+    create_restricted_public_folder(client, restricted_public_folder)
 
     # Create private private folder
     private_folder = create_private_folder(client.workspace.data_dir)
