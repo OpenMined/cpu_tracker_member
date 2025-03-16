@@ -46,6 +46,42 @@
             color: #721c24;
             display: block;
         }
+        .instructions {
+            background-color: #e2f4fd;
+            border-left: 4px solid #0ea5e9;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+            border-radius: 4px;
+        }
+        code {
+            background: rgba(0,0,0,0.05);
+            padding: 0.2rem 0.4rem;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .download-button {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 1rem;
+        }
+        .download-button:hover {
+            background-color: #1d4ed8;
+        }
+        #cors-warning {
+            display: none;
+            background-color: #fff4e5;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: left;
+            border-radius: 4px;
+        }
     </style>
     <script>
         // Syftbox Badge SDK
@@ -328,6 +364,11 @@
                         }
                     } catch (error) {
                         console.error("Error fetching API status:", error);
+                        // Show CORS warning if we're on GitHub Pages or another remote domain
+                        if (window.location.protocol !== 'file:' && !window.location.hostname.includes('localhost')) {
+                            document.getElementById('cors-warning').style.display = 'block';
+                            document.getElementById('badge-container').style.display = 'none';
+                        }
                         this.renderBadge(
                             "install-syftbox",
                             "Install SyftBox",
@@ -426,23 +467,62 @@
             window.APIBadge = APIBadgeSDK.init();
         })();
 
+        // Download HTML function
+        function downloadHTML() {
+            const htmlContent = document.documentElement.outerHTML;
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'install.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // Check if we're being served from a remote location
         document.addEventListener("DOMContentLoaded", async () => {
             await window.APIBadge.initialized;
-            window.APIBadge.show("https://github.com/openmined/cpu_tracker_member");
+            
+            // Check if we're on GitHub Pages or another remote domain
+            if (window.location.protocol !== 'file:' && !window.location.hostname.includes('localhost')) {
+                document.getElementById('cors-warning').style.display = 'block';
+                document.getElementById('badge-container').style.display = 'none';
+            } else {
+                window.APIBadge.show("https://github.com/openmined/cpu_tracker_member");
+            }
         });
     </script>
 </head>
 <body>
     <div class="container">
         <h1>Install CPU Tracker Member</h1>
-        <p>Click the button below to install the CPU Tracker Member app on your SyftBox instance.</p>
-        <p>Make sure your SyftBox is running and accessible at localhost:8080.</p>
         
-        <div class="button-container">
-            <div id="syftbox-api-badge"></div>
+        <div id="cors-warning" class="instructions">
+            <h3>⚠️ CORS Policy Error</h3>
+            <p>This installation page must be run locally to communicate with your SyftBox instance (which runs on localhost).</p>
+            <p>To install the CPU Tracker Member app:</p>
+            <ol>
+                <li>Download this page by clicking the button below</li>
+                <li>Save the file to your computer</li>
+                <li>Open the downloaded file in your browser</li>
+                <li>Make sure your SyftBox is running (accessible at localhost:8080)</li>
+                <li>Click the Install button on the locally opened page</li>
+            </ol>
+            <button class="download-button" onclick="downloadHTML()">Download Installation Page</button>
         </div>
         
-        <div id="install-status" class="status"></div>
+        <div id="badge-container">
+            <p>Click the button below to install the CPU Tracker Member app on your SyftBox instance.</p>
+            <p>Make sure your SyftBox is running and accessible at localhost:8080.</p>
+            
+            <div class="button-container">
+                <div id="syftbox-api-badge"></div>
+            </div>
+            
+            <div id="install-status" class="status"></div>
+        </div>
         
         <div class="return-link">
             <a href="https://github.com/openmined/cpu_tracker_member">← Return to GitHub repository</a>
