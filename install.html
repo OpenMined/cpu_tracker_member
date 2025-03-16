@@ -291,7 +291,7 @@
 
                     try {
                         const response = await fetch(
-                            `http://localhost:8080/app/status/${apiName}`
+                            `http://localhost:8080/apps/status/${apiName}`
                         );
 
                         if (response.status === 404) {
@@ -391,7 +391,7 @@
                     `;
 
                     try {
-                        const response = await fetch("http://localhost:8080/app/install", {
+                        const response = await fetch("http://localhost:8080/apps/install", {
                             method: "POST",
                             headers: {
                                 "Content-Type": "application/json",
