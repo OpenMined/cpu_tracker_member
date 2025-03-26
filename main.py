@@ -7,8 +7,8 @@ from statistics import mean
 
 import diffprivlib.tools as dp
 import psutil
-from syftbox.lib import Client
-from syftbox.lib.permissions import SyftPermission
+from syft_core import Client
+from syft_core.permissions import SyftPermission
 
 API_NAME = "cpu_tracker_member"
 AGGREGATOR_DATASITE = "aggregator@openmined.org"
