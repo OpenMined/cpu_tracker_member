@@ -7,8 +7,8 @@ from statistics import mean
 
 import diffprivlib.tools as dp
 import psutil
-from syftbox.lib import Client
-from syftbox.lib.permissions import SyftPermission
+from syft_core import Client
+from syft_core.permissions import SyftPermission
 
 API_NAME = "cpu_tracker_member"
 AGGREGATOR_DATASITE = "aggregator@openmined.org"
@@ -38,7 +38,7 @@ def create_restricted_public_folder(client: Client, cpu_tracker_dir: Path) -> No
     """
     Create an output folder for CPU tracker data within the specified path.
 
-    This function creates a directory structure for storing CPU tracker data under `api_data/cpu_tracker`. If the directory
+    This function creates a directory structure for storing CPU tracker data under `app_data/cpu_tracker`. If the directory
     already exists, it will not be recreated. Additionally, default permissions for accessing the created folder are set using the
     `SyftPermission` mechanism to allow the data to be read by an aggregator.
 
@@ -100,7 +100,7 @@ def save(path: str, cpu_usage: float):
     }
 
     Example:
-        save("datasites/user/api_data/cpu_tracker/cpu_data.json", 75.4)
+        save("datasites/user/app_data/cpu_tracker/cpu_data.json", 75.4)
     """
     current_time = datetime.now(UTC)
     timestamp_str = current_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -141,7 +141,7 @@ if __name__ == "__main__":
     client = Client.load()
 
     # Create an output file with proper read permissions
-    restricted_public_folder = client.api_data("cpu_tracker")
+    restricted_public_folder = client.app_data("cpu_tracker")
     create_restricted_public_folder(client, restricted_public_folder)
 
     # Create private private folder
